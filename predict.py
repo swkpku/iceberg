@@ -27,8 +27,8 @@ parser.add_argument('--output_dir', metavar='DIR', default='./',
 					help='path to output files')
 parser.add_argument('--model', '-m', metavar='MODEL', default='dpn92',
 					help='model architecture (default: dpn92)')
-parser.add_argument('-j', '--workers', default=6, type=int, metavar='N',
-					help='number of data loading workers (default: 6)')
+parser.add_argument('-j', '--workers', default=1, type=int, metavar='N',
+					help='number of data loading workers (default: 1)')
 parser.add_argument('-b', '--batch-size', default=256, type=int,
 					metavar='N', help='mini-batch size (default: 256)')
 parser.add_argument('--img-size', default=75, type=int,
@@ -46,16 +46,20 @@ parser.add_argument('--no-test-pool', dest='test_time_pool', action='store_false
                     
 args = parser.parse_args()
 
+transforms = model_factory.get_transforms_iceberg(
+    args.model,
+    args.img_size)
+
 config = {
     'test_batch_size': 100,
-    'checkpoint': 'checkpoints/ConvNet__lr6_bs32_size75_epoch_38_iter_40.pth.tar',
+    'checkpoint': 'checkpoints/resnet18__lr3_bs32_size160_epoch_14_iter_40.pth.tar',
     'print_freq': 10,
-    'pred_filename': "predicts/ConvNet__lr6_bs32_size75_epoch_38_iter_40_singlecrop.csv"
+    'pred_filename': "predicts/resnet18__lr3_bs32_size160_epoch_14_iter_40_singlecrop.csv"
 }
 
-data_path = "/media/swk/data/iceberg/data/"
+data_path = "/home/iceberg/"
 
-num_classes = 1
+num_classes = 2
 
 # get dataset
 print('getting dataset...')
@@ -63,7 +67,7 @@ print('getting dataset...')
 test_dataset = Dataset(
 		data_json=data_path+"test_1.json",
 		with_label=False,
-		transform=None)
+		transform=transforms)
         
 # get data loader
 print('getting data loader...')

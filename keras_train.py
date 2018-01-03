@@ -11,8 +11,8 @@ import pylab
 plt.rcParams['figure.figsize'] = 10, 10
 
 #Load the data.
-train = pd.read_json("/media/swk/data/iceberg/data/train.json")
-test = pd.read_json("/media/swk/data/iceberg/data/test.json")
+train = pd.read_json("/home/iceberg/train.json")
+test = pd.read_json("/home/iceberg/test.json")
 
 #Generate the training data
 #Create 3 bands having HH, HV and avg of both
@@ -29,6 +29,7 @@ print(X_train.shape)
 
 #Import Keras.
 from matplotlib import pyplot
+from keras.applications.resnet50 import ResNet50
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Dense, Dropout, Input, Flatten, Activation
@@ -41,7 +42,7 @@ from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, Callback, EarlyStopping
 
 #define our model
-def getModel():
+def getModel_old():
     #Building the model
     gmodel=Sequential()
     #Conv Layer 1
@@ -88,6 +89,17 @@ def getModel():
     gmodel.summary()
     return gmodel
 
+	#define our model
+def getModel():
+    #Building the model
+    gmodel=ResNet50(include_top=False, classes=2, input_shape = (75, 75, 3))
+
+    mypotim=Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+    gmodel.compile(loss='categorical_crossentropy',
+                  optimizer=mypotim,
+                  metrics=['accuracy'])
+    gmodel.summary()
+    return gmodel
 
 def get_callbacks(filepath, patience=2):
     es = EarlyStopping('val_loss', patience=patience, mode="min")
