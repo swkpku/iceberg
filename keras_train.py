@@ -29,38 +29,41 @@ print(X_train.shape)
 
 #Import Keras.
 from matplotlib import pyplot
+from keras.utils.np_utils import to_categorical
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D, Dense, Dropout, Input, Flatten, Activation
-from keras.layers import GlobalMaxPooling2D
+from keras.layers import Conv2D, MaxPooling2D, Dense, Dropout, Input, Flatten, Activation, Lambda, ZeroPadding2D
+from keras.layers import GlobalMaxPooling2D, GlobalAveragePooling2D
 from keras.layers.normalization import BatchNormalization
 from keras.layers.merge import Concatenate
 from keras.models import Model
 from keras import initializers
 from keras.optimizers import Adam
-from keras.callbacks import ModelCheckpoint, Callback, EarlyStopping
+from keras.callbacks import ModelCheckpoint, Callback, EarlyStopping, ReduceLROnPlateau
 
 #define our model
 def getModel():
     #Building the model
     gmodel=Sequential()
     #Conv Layer 1
-    gmodel.add(Conv2D(64, kernel_size=(3, 3),activation='relu', input_shape=(75, 75, 3)))
+    gmodel.add(Conv2D(64, kernel_size=(3, 3), padding='same', activation='relu', input_shape=(75, 75, 3)))
     gmodel.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
     gmodel.add(Dropout(0.2))
 
     #Conv Layer 2
-    gmodel.add(Conv2D(128, kernel_size=(3, 3), activation='relu' ))
+    gmodel.add(Conv2D(128, kernel_size=(3, 3), padding='same', activation='relu'))
     gmodel.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
     gmodel.add(Dropout(0.2))
-
-    #Conv Layer 3
-    gmodel.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
+    
+    gmodel.add(Conv2D(128, kernel_size=(3, 3), padding='same', activation='relu'))
     gmodel.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
     gmodel.add(Dropout(0.2))
-
-    #Conv Layer 4
-    gmodel.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
+    
+    gmodel.add(Conv2D(64, kernel_size=(3, 3), padding='same', activation='relu'))
+    gmodel.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    gmodel.add(Dropout(0.2))
+    
+    gmodel.add(Conv2D(32, kernel_size=(3, 3), padding='same', activation='relu'))
     gmodel.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
     gmodel.add(Dropout(0.2))
 
@@ -68,12 +71,8 @@ def getModel():
     gmodel.add(Flatten())
 
     #Dense Layers
+    
     gmodel.add(Dense(512))
-    gmodel.add(Activation('relu'))
-    gmodel.add(Dropout(0.2))
-
-    #Dense Layer 2
-    gmodel.add(Dense(256))
     gmodel.add(Activation('relu'))
     gmodel.add(Dropout(0.2))
 
@@ -81,22 +80,63 @@ def getModel():
     gmodel.add(Dense(1))
     gmodel.add(Activation('sigmoid'))
 
-    mypotim=Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+    mypotim=Adam(lr=0.0005, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
     gmodel.compile(loss='binary_crossentropy',
                   optimizer=mypotim,
                   metrics=['accuracy'])
     gmodel.summary()
     return gmodel
+ 
+def ConvBlock(model, layers, filters):
+    '''Create [layers] layers consisting of zero padding, a convolution with [filters] 3x3 filters and batch normalization. Perform max pooling after the last layer.'''
+    for i in range(layers):
+        model.add(ZeroPadding2D((1, 1)))
+        model.add(Conv2D(filters, (3, 3), activation='relu'))
+        model.add(BatchNormalization(axis=3))
+    model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+       
+def create_model():
+    '''Create the FCN and return a keras model.'''
+
+    model = Sequential()
+
+    # Input image: 75x75x3
+    model.add(Lambda(lambda x: x, input_shape=(75, 75, 3)))
+    ConvBlock(model, 1, 32)
+    # 37x37x32
+    ConvBlock(model, 1, 64)
+    # 18x18x64
+    ConvBlock(model, 1, 128)
+    # 9x9x128
+    ConvBlock(model, 1, 128)
+    # 4x4x128
+    model.add(ZeroPadding2D((1, 1)))
+    model.add(Conv2D(2, (3, 3), activation='relu'))
+    model.add(GlobalAveragePooling2D())
+    # 4x4x2
+    #model.add(Activation('softmax'))
+    #model.add(Dense(1))
+    model.add(Activation('sigmoid'))
+    
+    mypotim=Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+    model.compile(loss='binary_crossentropy',
+                  optimizer=mypotim,
+                  metrics=['accuracy'])
+    model.summary()
+    
+    return model
 
 
 def get_callbacks(filepath, patience=2):
     es = EarlyStopping('val_loss', patience=patience, mode="min")
     msave = ModelCheckpoint(filepath, save_best_only=True)
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=patience, min_lr=0.00001)
     return [es, msave]
 file_path = ".model_weights.hdf5"
 callbacks = get_callbacks(filepath=file_path, patience=5)
 
 target_train=train['is_iceberg']
+#target_train = to_categorical(train.is_iceberg.values,num_classes=2)
 X_train_cv, X_valid, y_train_cv, y_valid = train_test_split(X_train, target_train, random_state=1, train_size=0.75)
 
 #Without denoising, core features.
@@ -104,7 +144,7 @@ import os
 gmodel=getModel()
 gmodel.fit(X_train_cv, y_train_cv,
           batch_size=24,
-          epochs=50,
+          epochs=100,
           verbose=1,
           validation_data=(X_valid, y_valid),
           callbacks=callbacks)
