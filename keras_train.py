@@ -30,6 +30,7 @@ print(X_train.shape)
 #Import Keras.
 from matplotlib import pyplot
 from keras.applications.resnet50 import ResNet50
+from keras.applications.vgg19 import VGG19
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Dense, Dropout, Input, Flatten, Activation
@@ -89,17 +90,50 @@ def getModel_old():
     gmodel.summary()
     return gmodel
 
-	#define our model
+    #define our model
 def getModel():
-    #Building the model
-    gmodel=ResNet50(include_top=False, classes=2, input_shape = (75, 75, 3))
+    #Build keras model
+    
+    model=Sequential()
+    
+    # CNN 1
+    model.add(Conv2D(64, kernel_size=(3, 3),activation='relu', input_shape=(75, 75, 3)))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(Dropout(0.2))
 
-    mypotim=Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
-    gmodel.compile(loss='categorical_crossentropy',
-                  optimizer=mypotim,
-                  metrics=['accuracy'])
-    gmodel.summary()
-    return gmodel
+    # CNN 2
+    model.add(Conv2D(64, kernel_size=(3, 3), activation='relu' ))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(Dropout(0.2))
+
+    # CNN 3
+    model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(Dropout(0.2))
+
+    #CNN 4
+    model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(Dropout(0.2))
+
+    # You must flatten the data for the dense layers
+    model.add(Flatten())
+
+    #Dense 1
+    model.add(Dense(512, activation='relu'))
+    model.add(Dropout(0.2))
+
+    #Dense 2
+    model.add(Dense(256, activation='relu'))
+    model.add(Dropout(0.2))
+
+    # Output 
+    model.add(Dense(1, activation="sigmoid"))
+
+    optimizer = Adam(lr=0.001, decay=0.0)
+    model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+    
+    return model
 
 def get_callbacks(filepath, patience=2):
     es = EarlyStopping('val_loss', patience=patience, mode="min")
@@ -115,7 +149,7 @@ X_train_cv, X_valid, y_train_cv, y_valid = train_test_split(X_train, target_trai
 import os
 gmodel=getModel()
 gmodel.fit(X_train_cv, y_train_cv,
-          batch_size=24,
+          batch_size=32,
           epochs=50,
           verbose=1,
           validation_data=(X_valid, y_valid),
