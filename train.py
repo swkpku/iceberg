@@ -47,7 +47,7 @@ parser.add_argument('--no-test-pool', dest='test_time_pool', action='store_false
                     help='use pre-trained model')
 
                     
-data_path = "/media/swk/data/iceberg/data/"
+data_path = "/home/iceberg/"
 # Ignore warnings
 import warnings
 warnings.filterwarnings("ignore")

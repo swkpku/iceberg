@@ -26,11 +26,11 @@ class ConvRes(nn.Module):
         return self.math(x) 
 
 class ConvCNN(nn.Module):
-    def __init__(self,insize, outsize, kernel_size=3, padding=1, pool=2, stride=2, avg=True):
+    def __init__(self,insize, outsize, kernel_size=3, padding=1, pool=2, groups=1, stride=2, avg=True):
         super(ConvCNN, self).__init__()
         self.avg=avg
         self.math = torch.nn.Sequential(
-            torch.nn.Conv2d(insize, outsize, kernel_size=kernel_size,padding=padding),
+            torch.nn.Conv2d(insize, outsize, kernel_size=kernel_size,padding=padding, groups=groups),
             torch.nn.BatchNorm2d(outsize),
             torch.nn.ReLU(),
             torch.nn.MaxPool2d(pool,stride),
@@ -47,10 +47,10 @@ class ConvNet(nn.Module):
     def __init__(self):
         super(ConvNet, self).__init__()        
         
-        self.cnn1 = ConvCNN (3,64,  kernel_size=3, pool=3, avg=False)
-        self.cnn2 = ConvCNN (64,128, kernel_size=3, pool=2, avg=False)
-        self.cnn3 = ConvCNN (128,128, kernel_size=3, pool=2, avg=False)
-        self.cnn4 = ConvCNN (128,64, kernel_size=3, pool=2, avg=False)
+        self.cnn1 = ConvCNN (3,96,  kernel_size=3, padding=0,  pool=3, groups=3, avg=False)
+        self.cnn2 = ConvCNN (96,192, kernel_size=3,padding=0,  pool=2,groups=3,  avg=False)
+        self.cnn3 = ConvCNN (192,384, kernel_size=3,padding=0,  pool=2, groups=3, avg=False)
+        self.cnn4 = ConvCNN (384,64, kernel_size=3,padding=0,  pool=2, avg=False)
         
         self.features = nn.Sequential( 
             self.cnn1,dropout,          
@@ -59,7 +59,7 @@ class ConvNet(nn.Module):
             self.cnn4,dropout,
         )
         
-        self.fc1 = nn.Sequential(*make_linear_bn_relu_dropout(1024, 512, 0.2))
+        self.fc1 = nn.Sequential(*make_linear_bn_relu_dropout(256, 512, 0.2))
         self.fc2 = nn.Sequential(*make_linear_bn_relu_dropout(512, 256, 0.2))
         
         self.classifier = torch.nn.Sequential(

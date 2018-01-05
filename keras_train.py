@@ -11,8 +11,8 @@ import pylab
 plt.rcParams['figure.figsize'] = 10, 10
 
 #Load the data.
-train = pd.read_json("/media/swk/data/iceberg/data/train.json")
-test = pd.read_json("/media/swk/data/iceberg/data/test.json")
+train = pd.read_json("/home/iceberg/train.json")
+test = pd.read_json("/home/iceberg/test.json")
 
 #Generate the training data
 #Create 3 bands having HH, HV and avg of both
@@ -30,6 +30,8 @@ print(X_train.shape)
 #Import Keras.
 from matplotlib import pyplot
 from keras.utils.np_utils import to_categorical
+from keras.applications.resnet50 import ResNet50
+from keras.applications.vgg19 import VGG19
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Dense, Dropout, Input, Flatten, Activation, Lambda, ZeroPadding2D
@@ -42,7 +44,7 @@ from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, Callback, EarlyStopping, ReduceLROnPlateau
 
 #define our model
-def getModel():
+def getModel_old():
     #Building the model
     gmodel=Sequential()
     #Conv Layer 1
@@ -126,6 +128,50 @@ def create_model():
     
     return model
 
+    #define our model
+def getModel():
+    #Build keras model
+    
+    model=Sequential()
+    
+    # CNN 1
+    model.add(Conv2D(64, kernel_size=(3, 3),activation='relu', input_shape=(75, 75, 3)))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(Dropout(0.2))
+
+    # CNN 2
+    model.add(Conv2D(64, kernel_size=(3, 3), activation='relu' ))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(Dropout(0.2))
+
+    # CNN 3
+    model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(Dropout(0.2))
+
+    #CNN 4
+    model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(Dropout(0.2))
+
+    # You must flatten the data for the dense layers
+    model.add(Flatten())
+
+    #Dense 1
+    model.add(Dense(512, activation='relu'))
+    model.add(Dropout(0.2))
+
+    #Dense 2
+    model.add(Dense(256, activation='relu'))
+    model.add(Dropout(0.2))
+
+    # Output 
+    model.add(Dense(1, activation="sigmoid"))
+
+    optimizer = Adam(lr=0.001, decay=0.0)
+    model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+    
+    return model
 
 def get_callbacks(filepath, patience=2):
     es = EarlyStopping('val_loss', patience=patience, mode="min")
@@ -143,8 +189,8 @@ X_train_cv, X_valid, y_train_cv, y_valid = train_test_split(X_train, target_trai
 import os
 gmodel=getModel()
 gmodel.fit(X_train_cv, y_train_cv,
-          batch_size=24,
-          epochs=100,
+          batch_size=32,
+          epochs=50,
           verbose=1,
           validation_data=(X_valid, y_valid),
           callbacks=callbacks)

@@ -5,7 +5,7 @@ from __future__ import print_function
 import numpy as np
 import pandas as pd
 
-data_folder = '/media/swk/data/iceberg/data/'
+data_folder = '/home/iceberg/'
 
 # read json
 full_train_df = pd.read_json(data_folder+'train.json')

@@ -7,7 +7,6 @@ import torch.utils.data as data
 import numpy as np
 import pandas as pd
 from PIL import Image
-import cv2
 
 class Dataset(data.Dataset):
 

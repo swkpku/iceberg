@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 
-data_folder = '/media/swk/data/iceberg/data/'
+data_folder = '/home/iceberg/'
 
 # read json
 full_train_df = pd.read_json(data_folder+'train.json')
@@ -36,10 +36,10 @@ for idx, img_arr in enumerate(full_imgs):
     #     print(row)
     img = Image.fromarray(img_arr, mode='RGB')
     filename = str(idx)+'.png'
-    img.save(data_folder+'train/'+filename)
+#    img.save(data_folder+'train/'+filename)
     # break
     
-exit()
+# exit()
 test_df['band_1'] = test_df['band_1'].apply(lambda x: np.array(x).reshape(75, 75))
 test_df['band_2'] = test_df['band_2'].apply(lambda x: np.array(x).reshape(75, 75))
 

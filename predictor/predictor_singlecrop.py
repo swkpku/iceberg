@@ -34,9 +34,10 @@ class Predictor():
 
             # compute output
             output = self.model(input_var)
-            probs, predicts = torch.max(output.data, 1)
+            output_softmax = torch.nn.functional.softmax(output).data[:,1]
+            # probs, predicts = torch.max(output.data, 1)
 
-            for prod_id, prob in zip(prod_ids, probs):
+            for prod_id, prob in zip(prod_ids, output_softmax):
                 outfile.write("%s,%f\n" % (prod_id, prob))
             
             # measure elapsed time

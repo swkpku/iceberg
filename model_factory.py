@@ -70,7 +70,7 @@ def create_model(model_name, num_classes=1000, pretrained=False, **kwargs):
     elif model_name == 'inception_v3':
         model = inception_v3(
             num_classes=num_classes, pretrained=pretrained, transform_input=False, **kwargs)
-    elif model_name == 'ConvNet':
+    elif model_name == 'ConvNet_sigmoid':
         model = ConvNet()
     else:
         assert False, "Unknown model architecture (%s)" % model_name
