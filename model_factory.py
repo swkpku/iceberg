@@ -5,10 +5,11 @@ from __future__ import print_function
 import math
 import torch
 from dpn import dpn68, dpn68b, dpn92, dpn92_re, dpn98, dpn131, dpn107
-from models.resnet_adaptive_pooling import resnet18, resnet34, resnet50, resnet101, resnet152, resnet50_bestfitting, resnet50_sigmoid, resnet152_sigmoid
+from models.resnet_adaptive_pooling import resnet18, resnet18_sigmoid, resnet34, resnet50, resnet101, resnet152, resnet50_bestfitting, resnet50_sigmoid, resnet152_sigmoid
 from models.convnet import ConvNet
 from torchvision.models.densenet import densenet121, densenet169, densenet161, densenet201
 from torchvision.models.inception import inception_v3
+from models.vgg import vgg16_bn
 import torchvision.transforms as transforms
 from PIL import Image
 
@@ -45,6 +46,8 @@ def create_model(model_name, num_classes=1000, pretrained=False, **kwargs):
             num_classes=num_classes, pretrained=pretrained, test_time_pool=test_time_pool)
     elif model_name == 'resnet18':
         model = resnet18(num_classes=num_classes, pretrained=pretrained, **kwargs)
+    elif model_name == 'resnet18_sigmoid':
+        model = resnet18_sigmoid(num_classes=num_classes, pretrained=pretrained, **kwargs)
     elif model_name == 'resnet34':
         model = resnet34(num_classes=num_classes, pretrained=pretrained, **kwargs)
     elif model_name == 'resnet50':
@@ -70,6 +73,8 @@ def create_model(model_name, num_classes=1000, pretrained=False, **kwargs):
     elif model_name == 'inception_v3':
         model = inception_v3(
             num_classes=num_classes, pretrained=pretrained, transform_input=False, **kwargs)
+    elif model_name == 'vgg16_bn':
+        model = vgg16_bn(num_classes=num_classes, pretrained=pretrained, **kwargs)
     elif model_name == 'ConvNet_sigmoid':
         model = ConvNet()
     else:
@@ -146,7 +151,8 @@ def get_transforms_iceberg(model_name, img_size=224, crop_pct=None):
 
     return transforms.Compose([
         transforms.Scale(scale_size, Image.BICUBIC),
-        transforms.RandomCrop(img_size)])
+        transforms.RandomCrop(img_size),
+        ])
 
 def get_transforms_test(model_name, img_size=224, crop_pct=None):
     crop_pct = crop_pct or DEFAULT_CROP_PCT

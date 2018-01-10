@@ -47,7 +47,7 @@ parser.add_argument('--no-test-pool', dest='test_time_pool', action='store_false
                     help='use pre-trained model')
 
                     
-data_path = "/home/iceberg/"
+data_path = "/media/swk/data/iceberg/data/"
 # Ignore warnings
 import warnings
 warnings.filterwarnings("ignore")
@@ -62,12 +62,12 @@ def main():
     train_dataset = Dataset(
         data_json=data_path+"train_1.json",
         with_label=True,
-        transform=transforms)
+        transform=None)
         
     val_dataset = Dataset(
         data_json=data_path+"val_1.json",
         with_label=True,
-        transform=transforms)
+        transform=None)
 
     train_dataloader = data.DataLoader(
         train_dataset,
@@ -125,7 +125,9 @@ def main():
         config['log_file'] = open(args.output_dir+str(config['arch'])+"_lr"+str(config['lr_schedule_idx'])+"_bs"+str(config['train_batch_size'])+"_size"+str(config['img_size'])+".log" ,"a+")
     elif args.pretrained is True:
         print("using pretrained model")
-        original_model = args.model.rsplit('_', 1)[0]
+        original_model = args.model
+        if args.model.endswith('sigmoid'):
+            original_model = args.model.rsplit('_', 1)[0]
         pretrained_model = model_factory.create_model(original_model, num_classes=1000, pretrained=args.pretrained, test_time_pool=args.test_time_pool)
         
         pretrained_state = pretrained_model.state_dict()
@@ -151,7 +153,7 @@ def main():
     criterion = torch.nn.CrossEntropyLoss().cuda()
     
     if args.model.endswith('sigmoid'):
-        criterion =  torch.nn.BCELoss().cuda()
+        criterion = torch.nn.BCELoss().cuda()
 
     # get trainer
     Trainer = get_trainer(train_dataloader, val_dataloader, model, criterion, config)

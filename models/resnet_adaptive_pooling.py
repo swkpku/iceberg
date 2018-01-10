@@ -370,6 +370,16 @@ def resnet50_bestfitting(pretrained=False, **kwargs):
         model.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
     return model
     
+def resnet18_sigmoid(pretrained=False, **kwargs):
+    """Constructs a ResNet-18 model with sigmoid.
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
+    """
+    model = ResNet_sigmoid(Bottleneck, [2, 2, 2, 2], **kwargs)
+    if pretrained:
+        model.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
+    return model
+    
 def resnet50_sigmoid(pretrained=False, **kwargs):
     """Constructs a ResNet-50 model with sigmoid.
     Args:
